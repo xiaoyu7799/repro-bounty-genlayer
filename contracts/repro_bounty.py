@@ -1,34 +1,32 @@
-# v0.1.0
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
-# contracts/repro_bounty.py
-#
-# ReproBounty: a research-replication bounty primitive for GenLayer.
-#
-# A poster locks a bounty (simulated mGEN ledger units) behind a
-# published experiment spec. A reproducer re-runs the code and submits
-# the run log plus the actual output text. Validator consensus decides
-# whether the replication genuinely reproduced the claimed result:
-# REPRODUCED / FAILED / INCONCLUSIVE. The bounty is released only on
-# REPRODUCED. A failed or inconclusive attempt leaves the bounty locked
-# for the next attempt.
-#
-# Decision rule (see docs/mechanism.md for the worst-case spread proof):
-# - Deterministic, exact: the output hash is computed on-chain from the
-#   submitted text with pure-Python SHA-256 and must equal the expected
-#   hash exactly; the code hash must match exactly; the run log must
-#   contain both REPRO-START and REPRO-END markers. No tolerance, no
-#   "close enough": a different-but-close hash is FAILED.
-# - LLM judgement decides only the subjective part (does the log read as
-#   a genuine run): three integer scores 0-100, verdict from the minimum
-#   score with a single boundary at 70 and a required margin of 11
-#   (accepted leader minima are >= 81 or <= 59; 60-80 is a dead zone
-#   that validators reject). Per-score tolerance is 10, so any
-#   validator-compatible score set stays on the same side of the
-#   boundary: worst-case spread is 0 verdict flips, 0 mGEN difference.
-#
-# Target network: Stable Studionet only (Chain ID 61999).
-# All bounty money is a simulated mGEN ledger inside this contract;
-# no real GEN moves. Amounts are positive even integers.
+"""ReproBounty: a research-replication bounty primitive for GenLayer.
+
+A poster locks a bounty (simulated mGEN ledger units) behind a
+published experiment spec. A reproducer re-runs the code and submits
+the run log plus the actual output text. Validator consensus decides
+whether the replication genuinely reproduced the claimed result:
+REPRODUCED / FAILED / INCONCLUSIVE. The bounty is released only on
+REPRODUCED. A failed or inconclusive attempt leaves the bounty locked
+for the next attempt.
+
+Decision rule (see docs/mechanism.md for the worst-case spread proof):
+- Deterministic, exact: the output hash is computed on-chain from the
+  submitted text with pure-Python SHA-256 and must equal the expected
+  hash exactly; the code hash must match exactly; the run log must
+  contain both REPRO-START and REPRO-END markers. No tolerance, no
+  "close enough": a different-but-close hash is FAILED.
+- LLM judgement decides only the subjective part (does the log read as
+  a genuine run): three integer scores 0-100, verdict from the minimum
+  score with a single boundary at 70 and a required margin of 11
+  (accepted leader minima are >= 81 or <= 59; 60-80 is a dead zone
+  that validators reject). Per-score tolerance is 10, so any
+  validator-compatible score set stays on the same side of the
+  boundary: worst-case spread is 0 verdict flips, 0 mGEN difference.
+
+Target network: Stable Studionet only (Chain ID 61999).
+All bounty money is a simulated mGEN ledger inside this contract;
+no real GEN moves. Amounts are positive even integers.
+"""
 
 import json
 

@@ -1,0 +1,14 @@
+{
+  "network": "Stable Studionet",
+  "chainId": 61999,
+  "rpcUrl": "https://studio.genlayer.com/api",
+  "explorer": "https://explorer-studio.genlayer.com/address/0xc8572CD4C9578FC1000eBd89dfd4E40746005bEb",
+  "studio": "https://studio.genlayer.com/?import-contract=0xc8572CD4C9578FC1000eBd89dfd4E40746005bEb",
+  "contractAddress": "0xc8572CD4C9578FC1000eBd89dfd4E40746005bEb",
+  "deployTxHash": "0x806e0ad392dbf4374d0184e36d05f66b3ec43b75c062a9bd98bc770da052857b",
+  "deployer": "0x18306A1081e10f40a489a612b94630dF2Ce1e1bE",
+  "contractFile": "contracts/repro_bounty.py",
+  "contractSha256": "125a4df7cf4a2dc88a7b440bc99fa04b172af6b2f65391fe873fdbd271263b9a",
+  "deployedAt": "2026-11-09T07:44:15.633Z",
+  "receiptStatus": "FINALIZED"
+}
