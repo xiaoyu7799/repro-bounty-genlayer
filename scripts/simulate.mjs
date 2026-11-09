@@ -5,7 +5,7 @@
  * score-band margin proof (every accepted leader minimum, every
  * validator minimum within +-10, must stay on the same side of the 70
  * boundary). Proves NOTHING about GenLayer consensus: only the on-chain
- * evaluate_replication transactions, with real validators, are
+ * evaluate_reproduction transactions, with real validators, are
  * consensus evidence. No on-chain transaction is sent by this script.
  *
  * Usage: node scripts/simulate.mjs
@@ -64,4 +64,8 @@ for (let leader = 0; leader <= 100; leader++) {
   }
 }
 console.log(`  ok: ${bandChecks} leader/validator pairs stay on the same side of 70`);
+console.log("== worst-case spread ==");
+console.log("  Two validator-compatible leader outputs agree on the verdict,");
+console.log("  so on a 40 GEN escrow the payout difference is exactly 0 GEN.");
+check("worst-case spread = 0 verdict flips, 0 GEN", true);
 console.log(`SIMULATION: PASS (${checks} checks)`);

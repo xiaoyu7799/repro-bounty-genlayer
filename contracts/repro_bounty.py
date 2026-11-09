@@ -1,13 +1,42 @@
 # { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }
 """ReproBounty: a research-replication bounty primitive for GenLayer.
 
-A poster locks a bounty (simulated mGEN ledger units) behind a
-published experiment spec. A reproducer re-runs the code and submits
-the run log plus the actual output text. Validator consensus decides
-whether the replication genuinely reproduced the claimed result:
-REPRODUCED / FAILED / INCONCLUSIVE. The bounty is released only on
-REPRODUCED. A failed or inconclusive attempt leaves the bounty locked
-for the next attempt.
+A poster locks a bounty in real testnet GEN behind a published
+experiment spec. A reproducer re-runs the code and submits the run log
+plus the actual output text. Validator consensus decides whether the
+replication genuinely reproduced the claimed result: REPRODUCED /
+FAILED / INCONCLUSIVE. The bounty is paid out only through pull
+payments: finalization records a credit in wei, and the beneficiary
+calls withdraw_payout() to receive real GEN. No push payment ever
+happens at finalization time.
+
+Money (real GEN on Stable Studionet, Chain ID 61999, 1 GEN = 10^18 wei,
+faucet-funded testnet GEN, zero cash cost):
+- post_bounty is payable: the GEN sent with the call is the bounty and
+  is locked in the contract. The amount must be divisible by 4 wei so
+  the INCONCLUSIVE split is exact.
+- REPRODUCED: the full escrow is credited to the reproducer.
+- FAILED: the full escrow is credited back to the poster.
+- INCONCLUSIVE: 25% is credited to the reproducer, 75% back to the
+  poster.
+- cancel_bounty (poster only, before any decision is pending) credits
+  the full escrow back to the poster.
+- withdraw_payout() zeroes the caller's credit first, then transfers
+  the GEN to the caller's address.
+- Invariant: total_received_wei == total_paid_out_wei + locked_wei +
+  credits_total_wei, and the contract balance equals locked_wei +
+  credits_total_wei. See get_totals().
+
+Reputation starts at 0 for every address: +10 for a REPRODUCED
+replication, -5 for FAILED (floored at 0), no change for
+INCONCLUSIVE. Challenging costs no GEN: a failed challenge (the
+second verdict equals the first) costs the challenger 5 reputation,
+a successful one gains 5.
+
+Bounty states: OPEN -> REPRODUCTION_SUBMITTED ->
+VERDICT_REPRODUCED / VERDICT_FAILED / VERDICT_INCONCLUSIVE ->
+BOUNTY_CLOSED / BOUNTY_REFUNDED. Attempt states: SUBMITTED ->
+AWAITING_DECISION -> DECIDED.
 
 Decision rule (see docs/mechanism.md for the worst-case spread proof):
 - Deterministic, exact: the output hash is computed on-chain from the
@@ -21,16 +50,22 @@ Decision rule (see docs/mechanism.md for the worst-case spread proof):
   (accepted leader minima are >= 81 or <= 59; 60-80 is a dead zone
   that validators reject). Per-score tolerance is 10, so any
   validator-compatible score set stays on the same side of the
-  boundary: worst-case spread is 0 verdict flips, 0 mGEN difference.
-
-Target network: Stable Studionet only (Chain ID 61999).
-All bounty money is a simulated mGEN ledger inside this contract;
-no real GEN moves. Amounts are positive even integers.
+  boundary: worst-case spread is 0 verdict flips, 0 GEN difference.
 """
 
 import json
 
 from genlayer import *
+
+
+@gl.evm.contract_interface
+class _Recipient:
+    class View:
+        pass
+
+    class Write:
+        pass
+
 
 # ==============================================================================
 # 1. PURE-PYTHON SHA-256 (no dependency on unverified stdlib hashlib in GenVM)
@@ -95,8 +130,6 @@ def pure_sha256_hex(msg_str: str) -> str:
 # 2. CONSTANTS AND DETERMINISTIC DECISION RULES
 # ==============================================================================
 
-DEMO_CREDIT = 10000
-REPUTATION_START = 100
 SCORE_TOLERANCE = 10
 VERDICT_BOUNDARY = 70
 MARGIN = 11
@@ -106,6 +139,10 @@ MIN_LOG_LEN = 40
 MAX_OUTPUT_LEN = 2000
 MAX_LOG_LEN = 4000
 MAX_REF_LEN = 200
+# INCONCLUSIVE split: reproducer 1/4, poster 3/4 of the escrow (exact in
+# wei because post_bounty requires the bounty to be divisible by 4 wei).
+INCONCLUSIVE_REPRODUCER_NUM = 1
+INCONCLUSIVE_SPLIT_DEN = 4
 
 
 def _is_hex64(value: str) -> bool:
@@ -144,16 +181,23 @@ def _combine_verdict(deterministic: str, scores_verdict: str) -> str:
 class ReproBounty(gl.Contract):
     bounties: TreeMap[u256, str]
     attempts: TreeMap[u256, str]
-    balances: TreeMap[str, u256]
-    claimed_demo: TreeMap[str, u256]
+    credits: TreeMap[str, u256]
     reputation: TreeMap[str, u256]
     next_bounty_id: u256
     next_attempt_id: u256
     attempt_ids: DynArray[u256]
+    total_received: u256
+    total_paid_out: u256
+    locked_wei: u256
+    credits_total: u256
 
     def __init__(self):
         self.next_bounty_id = u256(0)
         self.next_attempt_id = u256(0)
+        self.total_received = u256(0)
+        self.total_paid_out = u256(0)
+        self.locked_wei = u256(0)
+        self.credits_total = u256(0)
 
     # -- deterministic helpers -------------------------------------------
 
@@ -166,7 +210,7 @@ class ReproBounty(gl.Contract):
         return default
 
     def _rep(self, address: str) -> int:
-        return self._map_int(self.reputation, address, REPUTATION_START)
+        return self._map_int(self.reputation, address, 0)
 
     def _set_rep(self, address: str, value: int) -> None:
         if value < 0:
@@ -175,6 +219,11 @@ class ReproBounty(gl.Contract):
 
     def _adjust_rep(self, address: str, delta: int) -> None:
         self._set_rep(address, self._rep(address) + delta)
+
+    def _credit(self, address: str, amount_wei: int) -> None:
+        prev = self._map_int(self.credits, address, 0)
+        self.credits[address] = u256(prev + amount_wei)
+        self.credits_total = self.credits_total + u256(amount_wei)
 
     def _load_bounty(self, bounty_id: u256) -> dict:
         if bounty_id not in self.bounties:
@@ -205,20 +254,35 @@ class ReproBounty(gl.Contract):
         }
 
     def _apply_final_verdict(self, bounty: dict, attempt: dict, verdict: str) -> None:
-        attempt["status"] = "FINALIZED"
+        attempt["status"] = "DECIDED"
         attempt["verdict"] = verdict
         attempt["pending_verdict"] = None
         reproducer = attempt["reproducer"]
+        poster = bounty["poster"]
+        escrow = int(bounty["escrow_wei"])
+        self.locked_wei = self.locked_wei - u256(escrow)
+        bounty["escrow_wei"] = 0
         if verdict == "REPRODUCED":
-            escrow = int(bounty["escrow"])
-            bounty["escrow"] = 0
-            bounty["status"] = "CLOSED"
+            bounty["status"] = "VERDICT_REPRODUCED"
             bounty["winner"] = reproducer
-            self.balances[reproducer] = u256(self._map_int(self.balances, reproducer, 0) + escrow)
+            bounty["reproducer_share_wei"] = escrow
+            bounty["poster_share_wei"] = 0
+            self._credit(reproducer, escrow)
             self._adjust_rep(reproducer, 10)
         elif verdict == "FAILED":
+            bounty["status"] = "VERDICT_FAILED"
+            bounty["reproducer_share_wei"] = 0
+            bounty["poster_share_wei"] = escrow
+            self._credit(poster, escrow)
             self._adjust_rep(reproducer, -5)
-        # INCONCLUSIVE: escrow stays locked, bounty stays OPEN, no rep change.
+        else:  # INCONCLUSIVE: 25% to the reproducer, 75% back to the poster.
+            reproducer_share = (escrow * INCONCLUSIVE_REPRODUCER_NUM) // INCONCLUSIVE_SPLIT_DEN
+            poster_share = escrow - reproducer_share
+            bounty["status"] = "VERDICT_INCONCLUSIVE"
+            bounty["reproducer_share_wei"] = reproducer_share
+            bounty["poster_share_wei"] = poster_share
+            self._credit(reproducer, reproducer_share)
+            self._credit(poster, poster_share)
         if attempt["round"] == 2 and attempt["first_verdict"] is not None:
             challenger = attempt["challenger"]
             if challenger:
@@ -229,18 +293,9 @@ class ReproBounty(gl.Contract):
 
     # -- writes ------------------------------------------------------------
 
-    @gl.public.write
-    def claim_demo_funds(self) -> u256:
-        sender = self._sender()
-        if sender in self.claimed_demo:
-            raise gl.vm.UserError("EXPECTED: demo_funds_already_claimed")
-        self.claimed_demo[sender] = u256(1)
-        self.balances[sender] = u256(self._map_int(self.balances, sender, 0) + DEMO_CREDIT)
-        return u256(int(self.balances[sender]))
-
-    @gl.public.write
+    @gl.public.write.payable
     def post_bounty(self, spec_hash: str, code_ref: str, expected_code_hash: str,
-                    expected_output_hash: str, amount: u256) -> u256:
+                    expected_output_hash: str) -> u256:
         if not _is_hex64(spec_hash):
             raise gl.vm.UserError("EXPECTED: spec_hash_must_be_64_lowercase_hex")
         if not _is_hex64(expected_code_hash):
@@ -249,14 +304,12 @@ class ReproBounty(gl.Contract):
             raise gl.vm.UserError("EXPECTED: expected_output_hash_must_be_64_lowercase_hex")
         if not isinstance(code_ref, str) or len(code_ref) < 1 or len(code_ref) > MAX_REF_LEN:
             raise gl.vm.UserError("EXPECTED: code_ref_must_be_1_to_200_chars")
-        amount_int = int(amount)
-        if amount_int <= 0 or amount_int % 2 != 0:
-            raise gl.vm.UserError("EXPECTED: amount_must_be_positive_even_integer")
+        value = gl.message.value
+        if value == u256(0):
+            raise gl.vm.UserError("EXPECTED: bounty_must_send_gen")
+        if int(value) % INCONCLUSIVE_SPLIT_DEN != 0:
+            raise gl.vm.UserError("EXPECTED: bounty_must_be_divisible_by_4_wei")
         sender = self._sender()
-        balance = self._map_int(self.balances, sender, 0)
-        if amount_int > balance:
-            raise gl.vm.UserError("EXPECTED: insufficient_simulated_balance")
-        self.balances[sender] = u256(balance - amount_int)
         bounty_id = self.next_bounty_id
         self.next_bounty_id = bounty_id + u256(1)
         bounty = {
@@ -266,17 +319,22 @@ class ReproBounty(gl.Contract):
             "code_ref": code_ref,
             "expected_code_hash": expected_code_hash,
             "expected_output_hash": expected_output_hash,
-            "amount": amount_int,
-            "escrow": amount_int,
+            "amount_wei": int(value),
+            "escrow_wei": int(value),
             "status": "OPEN",
             "winner": None,
+            "reproducer": None,
+            "reproducer_share_wei": 0,
+            "poster_share_wei": 0,
         }
+        self.total_received = self.total_received + value
+        self.locked_wei = self.locked_wei + value
         self._save_bounty(bounty)
         return bounty_id
 
     @gl.public.write
-    def submit_replication(self, bounty_id: u256, code_hash: str,
-                           output_text: str, run_log: str) -> u256:
+    def submit_reproduction(self, bounty_id: u256, code_hash: str,
+                            output_text: str, run_log: str) -> u256:
         bounty = self._load_bounty(bounty_id)
         if bounty["status"] != "OPEN":
             raise gl.vm.UserError("EXPECTED: bounty_not_open")
@@ -307,20 +365,23 @@ class ReproBounty(gl.Contract):
             "witness": None,
         }
         self.attempt_ids.append(attempt_id)
+        bounty["status"] = "REPRODUCTION_SUBMITTED"
+        bounty["reproducer"] = attempt["reproducer"]
+        self._save_bounty(bounty)
         self._save_attempt(attempt)
         return attempt_id
 
     @gl.public.write
-    def evaluate_replication(self, attempt_id: u256) -> str:
+    def evaluate_reproduction(self, attempt_id: u256) -> str:
         attempt = self._load_attempt(attempt_id)
         bounty = self._load_bounty(u256(attempt["bounty_id"]))
-        if bounty["status"] != "OPEN":
-            raise gl.vm.UserError("EXPECTED: bounty_not_open")
-        if attempt["status"] == "FINALIZED":
-            raise gl.vm.UserError("EXPECTED: attempt_already_finalized")
+        if bounty["status"] != "REPRODUCTION_SUBMITTED":
+            raise gl.vm.UserError("EXPECTED: bounty_not_awaiting_reproduction_verdict")
+        if attempt["status"] == "DECIDED":
+            raise gl.vm.UserError("EXPECTED: attempt_already_decided")
         if attempt["status"] == "SUBMITTED":
             round_no = 1
-        elif attempt["status"] == "EVALUATING" and attempt["challenged"] and attempt["round"] == 1:
+        elif attempt["status"] == "AWAITING_DECISION" and attempt["challenged"] and attempt["round"] == 1:
             round_no = 2
         else:
             raise gl.vm.UserError("EXPECTED: attempt_not_ready_for_evaluation")
@@ -444,7 +505,7 @@ class ReproBounty(gl.Contract):
                 "note": "Scores judged the log genuine while the deterministic check did not; deterministic verdict stands.",
             }
         if round_no == 1:
-            attempt["status"] = "EVALUATING"
+            attempt["status"] = "AWAITING_DECISION"
             attempt["round"] = 1
             attempt["pending_verdict"] = verdict
             self._save_attempt(attempt)
@@ -457,9 +518,9 @@ class ReproBounty(gl.Contract):
         return json.dumps({"attempt_id": int(attempt_id), "round": round_no, "verdict": verdict, "status": attempt["status"]})
 
     @gl.public.write
-    def challenge_replication(self, attempt_id: u256) -> str:
+    def challenge_reproduction(self, attempt_id: u256) -> str:
         attempt = self._load_attempt(attempt_id)
-        if attempt["status"] != "EVALUATING" or attempt["round"] != 1 or attempt["challenged"]:
+        if attempt["status"] != "AWAITING_DECISION" or attempt["round"] != 1 or attempt["challenged"]:
             raise gl.vm.UserError("EXPECTED: attempt_not_open_to_challenge")
         sender = self._sender()
         if sender == attempt["reproducer"]:
@@ -467,13 +528,13 @@ class ReproBounty(gl.Contract):
         attempt["challenged"] = True
         attempt["challenger"] = sender
         self._save_attempt(attempt)
-        return json.dumps({"attempt_id": int(attempt_id), "challenger": sender, "status": "EVALUATING"})
+        return json.dumps({"attempt_id": int(attempt_id), "challenger": sender, "status": "AWAITING_DECISION"})
 
     @gl.public.write
-    def finalize_replication(self, attempt_id: u256) -> str:
+    def finalize_reproduction(self, attempt_id: u256) -> str:
         attempt = self._load_attempt(attempt_id)
         bounty = self._load_bounty(u256(attempt["bounty_id"]))
-        if attempt["status"] != "EVALUATING" or attempt["round"] != 1:
+        if attempt["status"] != "AWAITING_DECISION" or attempt["round"] != 1:
             raise gl.vm.UserError("EXPECTED: attempt_not_awaiting_finalize")
         if attempt["challenged"]:
             raise gl.vm.UserError("EXPECTED: challenged_attempt_must_be_reevaluated")
@@ -483,26 +544,67 @@ class ReproBounty(gl.Contract):
         self._apply_final_verdict(bounty, attempt, verdict)
         self._save_bounty(bounty)
         self._save_attempt(attempt)
-        return json.dumps({"attempt_id": int(attempt_id), "verdict": verdict, "status": "FINALIZED"})
+        return json.dumps({"attempt_id": int(attempt_id), "verdict": verdict, "status": "DECIDED"})
 
     @gl.public.write
     def cancel_bounty(self, bounty_id: u256) -> str:
         bounty = self._load_bounty(bounty_id)
-        if bounty["status"] != "OPEN":
-            raise gl.vm.UserError("EXPECTED: bounty_not_open")
+        if bounty["status"] not in ("OPEN", "REPRODUCTION_SUBMITTED"):
+            raise gl.vm.UserError("EXPECTED: bounty_not_cancellable")
         if self._sender() != bounty["poster"]:
             raise gl.vm.UserError("EXPECTED: only_poster_can_cancel")
         for attempt_id in self.attempt_ids:
             attempt = json.loads(self.attempts[attempt_id])
-            if int(attempt["bounty_id"]) == int(bounty_id) and attempt["status"] == "EVALUATING":
+            if int(attempt["bounty_id"]) == int(bounty_id) and attempt["status"] == "AWAITING_DECISION":
                 raise gl.vm.UserError("EXPECTED: attempt_under_evaluation")
-        escrow = int(bounty["escrow"])
+        escrow = int(bounty["escrow_wei"])
         poster = bounty["poster"]
-        bounty["escrow"] = 0
-        bounty["status"] = "CANCELLED"
-        self.balances[poster] = u256(self._map_int(self.balances, poster, 0) + escrow)
+        self.locked_wei = self.locked_wei - u256(escrow)
+        bounty["escrow_wei"] = 0
+        bounty["status"] = "BOUNTY_REFUNDED"
+        bounty["poster_share_wei"] = escrow
+        self._credit(poster, escrow)
         self._save_bounty(bounty)
-        return json.dumps({"bounty_id": int(bounty_id), "status": "CANCELLED", "refunded": escrow})
+        return json.dumps({"bounty_id": int(bounty_id), "status": "BOUNTY_REFUNDED", "refunded_wei": escrow})
+
+    @gl.public.write
+    def withdraw_payout(self) -> str:
+        sender = self._sender()
+        if sender not in self.credits:
+            raise gl.vm.UserError("EXPECTED: no_credit")
+        amount = self.credits[sender]
+        if amount == u256(0):
+            raise gl.vm.UserError("EXPECTED: no_credit")
+        # Zero the credit BEFORE the transfer: a failed child message
+        # cannot pay the same credit twice.
+        self.credits[sender] = u256(0)
+        self.credits_total = self.credits_total - amount
+        self.total_paid_out = self.total_paid_out + amount
+        _Recipient(Address(sender)).emit_transfer(value=amount)
+        # Close out any bounty whose payout shares are now fully paid.
+        index = 0
+        total_bounties = int(self.next_bounty_id)
+        while index < total_bounties:
+            bounty = self._load_bounty(u256(index))
+            if bounty["status"] in ("VERDICT_REPRODUCED", "VERDICT_FAILED", "VERDICT_INCONCLUSIVE"):
+                reproducer = bounty["reproducer"]
+                poster = bounty["poster"]
+                reproducer_done = int(bounty["reproducer_share_wei"]) == 0 or (
+                    reproducer is not None and self._map_int(self.credits, reproducer, 0) == 0)
+                poster_done = int(bounty["poster_share_wei"]) == 0 or self._map_int(self.credits, poster, 0) == 0
+                if reproducer_done and poster_done:
+                    if bounty["status"] == "VERDICT_FAILED":
+                        bounty["status"] = "BOUNTY_REFUNDED"
+                    else:
+                        bounty["status"] = "BOUNTY_CLOSED"
+                    self._save_bounty(bounty)
+            index += 1
+        return json.dumps({
+            "sender": sender,
+            "withdrawn_wei": int(amount),
+            "total_paid_out_wei": int(self.total_paid_out),
+            "contract_balance_wei": int(self.balance),
+        })
 
     # -- views -------------------------------------------------------------
 
@@ -523,12 +625,25 @@ class ReproBounty(gl.Contract):
         return u256(int(self.next_attempt_id))
 
     @gl.public.view
-    def get_balance(self, address: str) -> u256:
-        return u256(self._map_int(self.balances, address, 0))
+    def get_credit(self, address: str) -> u256:
+        return u256(self._map_int(self.credits, address, 0))
 
     @gl.public.view
     def get_reputation(self, address: str) -> u256:
         return u256(self._rep(address))
+
+    @gl.public.view
+    def get_totals(self) -> str:
+        return json.dumps(
+            {
+                "total_received_wei": int(self.total_received),
+                "total_paid_out_wei": int(self.total_paid_out),
+                "locked_wei": int(self.locked_wei),
+                "credits_total_wei": int(self.credits_total),
+                "contract_balance_wei": int(self.balance),
+                "accounted_wei": int(self.total_paid_out + self.locked_wei + self.credits_total),
+            }
+        )
 
     @gl.public.view
     def list_bounties(self, offset: u256, limit: u256) -> str:

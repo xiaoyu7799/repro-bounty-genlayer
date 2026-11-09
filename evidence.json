@@ -2,81 +2,125 @@
   "network": "Stable Studionet",
   "chainId": 61999,
   "rpcUrl": "https://studio.genlayer.com/api",
-  "contractAddress": "0x30e04052D3968E21f74FcB6cC4bBEFa9CC527472",
-  "explorer": "https://explorer-studio.genlayer.com/address/0x30e04052D3968E21f74FcB6cC4bBEFa9CC527472",
-  "poster": "0x355a5d6EA62F383117DbDcE52716A3C2B3992400",
-  "reproducer": "0xCAe58dc17c308cFb39f957Dc9294911353461E75",
-  "challenger": "0xD9eD3aFD8cB6d27380D3CDDdAd3575d87c306126",
+  "contractAddress": "0xFC225789B5322eE883b7FE96cf0353caB5C938c9",
+  "explorer": "https://explorer-studio.genlayer.com/address/0xFC225789B5322eE883b7FE96cf0353caB5C938c9",
+  "deployTxHash": "0xae0d289f30a41e808c819cb8fe5f31ffed40f8c27795dad51a3df94de8457f45",
+  "contractSha256": "dfb7a6719c249c2aeaf58d7e9100ff64e4a005c6676032c19e760b718efae770",
+  "poster": "0xaD44fb7DBaF5325B2dCBD6d86a6dBa3a197e2ac9",
+  "reproducer": "0x07cC2EdfDdc5aAAac8f92769f8885c5E0eb971b8",
+  "challenger": "0xcbB0009A00Cd485d587Fc3800B4536a4986E87A4",
   "expectedOutputHash": "759ba5bc0ba9d4a301ef865bd4bbe968c8dec6a93b899912e8225bcd8f6eb1bb",
-  "txs": {
-    "claimTx": "0x5f7b34ce27dc19a0dcc9f5099c05b37e9117467834dc407f87aae39d1dba14f2",
-    "postBounty0Tx": "0x99c8bf027889cca32fc6303d765e150f4ef10030dd28048962d35e73cee2ce61",
-    "submit0Tx": "0x60c063eb6eed15d56261815dde1ef5bcf9193c4e2e0bc504ba16fe96d65492de",
-    "evaluate0Round1Tx": "0xec02ac214527fed207147778496c3ea68b77197a7d432261ec51901154326e7d",
-    "challenge0Tx": "0x036f58bb869777bf400fafcbbd874782312502ca3eb8ff9cbc64a8c540a0eebe",
-    "evaluate0Round2Tx": "0xdc4964647014a4e7afd1b50fb79443f00d028c720c1c818d71a0866a9b62629e",
-    "postBounty1Tx": "0x2f792848fe622a43475f617510c98d5d2ee858c306c8f1772030004e29c3f6d9",
-    "submit1Tx": "0xe91e5e9898ce60e0586c47bc3723103b4bfdd53b4616b4cea63af888d8cbbae6",
-    "evaluate1Round1Tx": "0xf389253e5905bd7a17dd0f789c2c9133c75a227d7ca0889190614e5a48efb977",
-    "finalize1Tx": "0x572551569661ee3791cf3ffcd16ba8dd7a2266be156649ceb3e8d830301461c7",
-    "receiptStatus": "FINALIZED"
+  "funding": {
+    "posterFundTx": "0x9de49d173c2e58652499aa110a8ca56ff46d3ede9a6c2ae08a39a419beaa7830",
+    "reproducerFundTx": "0x0fb8a2c85b03e81a499d5c24112a3103af641b248ed7fd5b2ab7fc9f0a77683e",
+    "challengerFundTx": "0xdb22db39996cf962b53a69162d9fd64158a2209ce150fd9aac64a33cad1ff3ff",
+    "fundedGenPerAccount": 10000,
+    "eoaBalanceBeforeWei": {
+      "poster": "10000000000000000000000",
+      "reproducer": "10000000000000000000000",
+      "challenger": "10000000000000000000000"
+    },
+    "eoaBalanceAfterWei": {
+      "poster": "9950000000000000000000",
+      "reproducer": "10050000000000000000000",
+      "challenger": "10000000000000000000000"
+    }
   },
+  "txs": {
+    "postBounty0Tx": "0x4aae86e937e2b15a4e957d012a790882e43c6dd8fcfb14aa87596687ada9a190",
+    "submit0Tx": "0xca04256522394ba17431367eb47dde7ec310a13f287eb4f09ad6003260db29f7",
+    "evaluate0Round1Tx": "0x3035e0afb731ae43162774a4d8aac081c682b02e66923a2be579d355140a8a5a",
+    "challenge0Tx": "0xcb92190b0bb1960ae74cdd256b5d48d72c71c4fea9b868f29541ed6014a60459",
+    "evaluate0Round2Tx": "0x72652bc5e1b1f6537837c72a2105d575badac8181b49fc59a27cf85523acbc45",
+    "withdraw0Tx": "0x6ca4328f078accc82766cf216661bd2de0dc8e10adae1fdb4d732fe127ac1558",
+    "postBounty1Tx": "0x1178e1980a36b1429aa56f8afc69acd88931d4e7e3b069752e2d62fb7f12add9",
+    "submit1Tx": "0x0dbaecf102a0352b510177683bb4f899124743de29feb8b59ac28f6c658d6347",
+    "evaluate1Round1Tx": "0xaaf018ac95120410ac29d7d1bebc70a877644afd914e86dbd7c44333a3e0aecb",
+    "finalize1Tx": "0x53cfc6a3fdf706ebe1996e0b0e2f827e315d42b903beb8d1420a8ef3c46324f9",
+    "withdraw1Tx": "0x1924fa5b04d513bd056f0f57b80ef1a391029930fa90b5af5346dac859a0d0b6",
+    "postBounty2Tx": "0x2b6a73971f4ba86bc0d6df505f16c01105146282bbf2129d879098ea1ca34c2b",
+    "submit2Tx": "0x231f1b6361b5721c8f2d58c3599cd60b3f0e100f4e67fac5bd63a0660c9d16e1",
+    "evaluate2Round1Tx": "0x32266a58c95f5c512f99011bea69e2d6f75f162c6278d42862b1187f10f224cc",
+    "finalize2Tx": "0x0366430d435e1af5f5b26e358ac0a106c70669ff32a8046bffd7a045ca79301f",
+    "withdraw2ReproTx": "0xa71e56f6704478b8fe7666405fdc433281f45b572a18aa612c55615db240b3bf",
+    "withdraw2PosterTx": "0x410c9e3b884cd52801c05495c7a0a0bae06407cf5432bb7bc510e6c220f5a289",
+    "postBounty3Tx": "0xc11e2806631d532d35fded9cb690249ca16af4384cff7c484a40872aedb8216d",
+    "cancel3Tx": "0x1e15fe843ea55112f5249a589f03c9c8f9b71eed2113b668bddba592b125df75",
+    "withdraw3Tx": "0xce9b23f775b5a791db21617dd4d383bead75f64b72b9e1718089f46976b8a866"
+  },
+  "deadZoneRetries": [
+    {
+      "label": "evaluate#2 round 1",
+      "try": 1,
+      "txHash": "0x6d52ee0f6a81bce9b0d66eba82344f5851559adea6d14b65506e9e32285fa581",
+      "note": "FINALIZED but wrote nothing: leader scores in the 60-80 dead zone were rejected by validators"
+    },
+    {
+      "label": "evaluate#2 round 1",
+      "try": 2,
+      "txHash": "0xa16fee278d40514d88d19588b19c67e5a623297cb22dd02ec6db51390ae2a755",
+      "note": "FINALIZED but wrote nothing: leader scores in the 60-80 dead zone were rejected by validators"
+    }
+  ],
   "readbacks": {
     "attempt0": {
       "id": 0,
       "bounty_id": 0,
-      "reproducer": "0xCAe58dc17c308cFb39f957Dc9294911353461E75",
+      "reproducer": "0x07cC2EdfDdc5aAAac8f92769f8885c5E0eb971b8",
       "code_hash": "3f9c3016763ca5b506de216152903050c37080f9bbce666d6c934207434dbeda",
       "output_text": "pi=3.14159",
       "output_hash": "759ba5bc0ba9d4a301ef865bd4bbe968c8dec6a93b899912e8225bcd8f6eb1bb",
       "run_log": "REPRO-START run reproduce.py --seed 7\nstep 1: load data ok\nstep 2: compute pi series ok\nRESULT pi=3.14159 matches expected\nREPRO-END exit 0",
-      "status": "FINALIZED",
+      "status": "DECIDED",
       "round": 2,
       "pending_verdict": null,
       "verdict": "REPRODUCED",
       "first_verdict": "REPRODUCED",
       "scores": {
-        "log_consistency": 95,
-        "output_plausibility": 90,
-        "code_fidelity": 85,
-        "min_score": 85
+        "log_consistency": 100,
+        "output_plausibility": 100,
+        "code_fidelity": 100,
+        "min_score": 100
       },
       "challenged": true,
-      "challenger": "0xD9eD3aFD8cB6d27380D3CDDdAd3575d87c306126",
+      "challenger": "0xcbB0009A00Cd485d587Fc3800B4536a4986E87A4",
       "witness": null
     },
     "bounty0": {
       "id": 0,
-      "poster": "0x355a5d6EA62F383117DbDcE52716A3C2B3992400",
+      "poster": "0xaD44fb7DBaF5325B2dCBD6d86a6dBa3a197e2ac9",
       "spec_hash": "9e0c088d4a4a58300e808f44646d87a9708057a98872de00eabb842be16f8e1f",
       "code_ref": "https://example.org/reproduce.py",
       "expected_code_hash": "3f9c3016763ca5b506de216152903050c37080f9bbce666d6c934207434dbeda",
       "expected_output_hash": "759ba5bc0ba9d4a301ef865bd4bbe968c8dec6a93b899912e8225bcd8f6eb1bb",
-      "amount": 4000,
-      "escrow": 0,
-      "status": "CLOSED",
-      "winner": "0xCAe58dc17c308cFb39f957Dc9294911353461E75"
+      "amount_wei": 40000000000000000000,
+      "escrow_wei": 0,
+      "status": "BOUNTY_CLOSED",
+      "winner": "0x07cC2EdfDdc5aAAac8f92769f8885c5E0eb971b8",
+      "reproducer": "0x07cC2EdfDdc5aAAac8f92769f8885c5E0eb971b8",
+      "reproducer_share_wei": 40000000000000000000,
+      "poster_share_wei": 0
     },
-    "reproducerBalanceAfterReproduced": "4000",
-    "reproducerReputationAfterReproduced": "110",
+    "reproducerCreditAfterReproducedWei": "40000000000000000000",
+    "reproducerReputationAfterReproduced": "10",
     "attempt1": {
       "id": 1,
       "bounty_id": 1,
-      "reproducer": "0xCAe58dc17c308cFb39f957Dc9294911353461E75",
+      "reproducer": "0x07cC2EdfDdc5aAAac8f92769f8885c5E0eb971b8",
       "code_hash": "3f9c3016763ca5b506de216152903050c37080f9bbce666d6c934207434dbeda",
-      "output_text": "pi=3.14000",
-      "output_hash": "e49f777154e45ce08f54d60da9241a6bde2dcb8bfdb2482c2f2fbf4a8dfb88b1",
+      "output_text": "pi=9.99999",
+      "output_hash": "1083c77d3cb94fe3f789ee8146a0eb4fa9eb3450775ae05273e26e760dc6265e",
       "run_log": "REPRO-START run reproduce.py --seed 7\nstep 1: load data ok\nstep 2: compute pi series ok\nRESULT pi=3.14159 matches expected\nREPRO-END exit 0",
-      "status": "FINALIZED",
+      "status": "DECIDED",
       "round": 1,
       "pending_verdict": null,
       "verdict": "FAILED",
       "first_verdict": null,
       "scores": {
-        "log_consistency": 92,
-        "output_plausibility": 12,
-        "code_fidelity": 88,
-        "min_score": 12
+        "log_consistency": 0,
+        "output_plausibility": 0,
+        "code_fidelity": 0,
+        "min_score": 0
       },
       "challenged": false,
       "challenger": null,
@@ -84,18 +128,90 @@
     },
     "bounty1": {
       "id": 1,
-      "poster": "0x355a5d6EA62F383117DbDcE52716A3C2B3992400",
+      "poster": "0xaD44fb7DBaF5325B2dCBD6d86a6dBa3a197e2ac9",
       "spec_hash": "9e0c088d4a4a58300e808f44646d87a9708057a98872de00eabb842be16f8e1f",
       "code_ref": "https://example.org/reproduce.py",
       "expected_code_hash": "3f9c3016763ca5b506de216152903050c37080f9bbce666d6c934207434dbeda",
       "expected_output_hash": "759ba5bc0ba9d4a301ef865bd4bbe968c8dec6a93b899912e8225bcd8f6eb1bb",
-      "amount": 2000,
-      "escrow": 2000,
-      "status": "OPEN",
-      "winner": null
+      "amount_wei": 40000000000000000000,
+      "escrow_wei": 0,
+      "status": "BOUNTY_REFUNDED",
+      "winner": null,
+      "reproducer": "0x07cC2EdfDdc5aAAac8f92769f8885c5E0eb971b8",
+      "reproducer_share_wei": 0,
+      "poster_share_wei": 40000000000000000000
     },
-    "reproducerReputationFinal": "105",
-    "posterBalanceFinal": "4000"
+    "attempt2": {
+      "id": 2,
+      "bounty_id": 2,
+      "reproducer": "0x07cC2EdfDdc5aAAac8f92769f8885c5E0eb971b8",
+      "code_hash": "3f9c3016763ca5b506de216152903050c37080f9bbce666d6c934207434dbeda",
+      "output_text": "pi=3.14159",
+      "output_hash": "759ba5bc0ba9d4a301ef865bd4bbe968c8dec6a93b899912e8225bcd8f6eb1bb",
+      "run_log": "REPRO-START run reproduce.py --seed 7\nstep 1: load data ok\nstep 2: compute pi series ok\nRESULT pi=3.14159 matches expected\nERROR: process terminated unexpectedly, no REPRO-END, run did not complete\n",
+      "status": "DECIDED",
+      "round": 1,
+      "pending_verdict": null,
+      "verdict": "INCONCLUSIVE",
+      "first_verdict": null,
+      "scores": {
+        "log_consistency": 20,
+        "output_plausibility": 95,
+        "code_fidelity": 30,
+        "min_score": 20
+      },
+      "challenged": false,
+      "challenger": null,
+      "witness": null
+    },
+    "bounty2": {
+      "id": 2,
+      "poster": "0xaD44fb7DBaF5325B2dCBD6d86a6dBa3a197e2ac9",
+      "spec_hash": "9e0c088d4a4a58300e808f44646d87a9708057a98872de00eabb842be16f8e1f",
+      "code_ref": "https://example.org/reproduce.py",
+      "expected_code_hash": "3f9c3016763ca5b506de216152903050c37080f9bbce666d6c934207434dbeda",
+      "expected_output_hash": "759ba5bc0ba9d4a301ef865bd4bbe968c8dec6a93b899912e8225bcd8f6eb1bb",
+      "amount_wei": 40000000000000000000,
+      "escrow_wei": 0,
+      "status": "BOUNTY_CLOSED",
+      "winner": null,
+      "reproducer": "0x07cC2EdfDdc5aAAac8f92769f8885c5E0eb971b8",
+      "reproducer_share_wei": 10000000000000000000,
+      "poster_share_wei": 30000000000000000000
+    },
+    "bounty3": {
+      "id": 3,
+      "poster": "0xaD44fb7DBaF5325B2dCBD6d86a6dBa3a197e2ac9",
+      "spec_hash": "9e0c088d4a4a58300e808f44646d87a9708057a98872de00eabb842be16f8e1f",
+      "code_ref": "https://example.org/reproduce.py",
+      "expected_code_hash": "3f9c3016763ca5b506de216152903050c37080f9bbce666d6c934207434dbeda",
+      "expected_output_hash": "759ba5bc0ba9d4a301ef865bd4bbe968c8dec6a93b899912e8225bcd8f6eb1bb",
+      "amount_wei": 40000000000000000000,
+      "escrow_wei": 0,
+      "status": "BOUNTY_REFUNDED",
+      "winner": null,
+      "reproducer": null,
+      "reproducer_share_wei": 0,
+      "poster_share_wei": 40000000000000000000
+    },
+    "totals": {
+      "total_received_wei": 160000000000000000000,
+      "total_paid_out_wei": 160000000000000000000,
+      "locked_wei": 0,
+      "credits_total_wei": 0,
+      "contract_balance_wei": 0,
+      "accounted_wei": 160000000000000000000
+    },
+    "reputation": {
+      "poster": "0",
+      "reproducer": "5",
+      "challenger": "0"
+    },
+    "credits": {
+      "poster": "0",
+      "reproducer": "0",
+      "challenger": "0"
+    }
   },
-  "checkedAt": "2026-11-09T08:01:51.559Z"
+  "checkedAt": "2026-11-09T10:59:27.441Z"
 }
