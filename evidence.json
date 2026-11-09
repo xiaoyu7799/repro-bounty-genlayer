@@ -1,0 +1,101 @@
+{
+  "network": "Stable Studionet",
+  "chainId": 61999,
+  "rpcUrl": "https://studio.genlayer.com/api",
+  "contractAddress": "0x30e04052D3968E21f74FcB6cC4bBEFa9CC527472",
+  "explorer": "https://explorer-studio.genlayer.com/address/0x30e04052D3968E21f74FcB6cC4bBEFa9CC527472",
+  "poster": "0x355a5d6EA62F383117DbDcE52716A3C2B3992400",
+  "reproducer": "0xCAe58dc17c308cFb39f957Dc9294911353461E75",
+  "challenger": "0xD9eD3aFD8cB6d27380D3CDDdAd3575d87c306126",
+  "expectedOutputHash": "759ba5bc0ba9d4a301ef865bd4bbe968c8dec6a93b899912e8225bcd8f6eb1bb",
+  "txs": {
+    "claimTx": "0x5f7b34ce27dc19a0dcc9f5099c05b37e9117467834dc407f87aae39d1dba14f2",
+    "postBounty0Tx": "0x99c8bf027889cca32fc6303d765e150f4ef10030dd28048962d35e73cee2ce61",
+    "submit0Tx": "0x60c063eb6eed15d56261815dde1ef5bcf9193c4e2e0bc504ba16fe96d65492de",
+    "evaluate0Round1Tx": "0xec02ac214527fed207147778496c3ea68b77197a7d432261ec51901154326e7d",
+    "challenge0Tx": "0x036f58bb869777bf400fafcbbd874782312502ca3eb8ff9cbc64a8c540a0eebe",
+    "evaluate0Round2Tx": "0xdc4964647014a4e7afd1b50fb79443f00d028c720c1c818d71a0866a9b62629e",
+    "postBounty1Tx": "0x2f792848fe622a43475f617510c98d5d2ee858c306c8f1772030004e29c3f6d9",
+    "submit1Tx": "0xe91e5e9898ce60e0586c47bc3723103b4bfdd53b4616b4cea63af888d8cbbae6",
+    "evaluate1Round1Tx": "0xf389253e5905bd7a17dd0f789c2c9133c75a227d7ca0889190614e5a48efb977",
+    "finalize1Tx": "0x572551569661ee3791cf3ffcd16ba8dd7a2266be156649ceb3e8d830301461c7",
+    "receiptStatus": "FINALIZED"
+  },
+  "readbacks": {
+    "attempt0": {
+      "id": 0,
+      "bounty_id": 0,
+      "reproducer": "0xCAe58dc17c308cFb39f957Dc9294911353461E75",
+      "code_hash": "3f9c3016763ca5b506de216152903050c37080f9bbce666d6c934207434dbeda",
+      "output_text": "pi=3.14159",
+      "output_hash": "759ba5bc0ba9d4a301ef865bd4bbe968c8dec6a93b899912e8225bcd8f6eb1bb",
+      "run_log": "REPRO-START run reproduce.py --seed 7\nstep 1: load data ok\nstep 2: compute pi series ok\nRESULT pi=3.14159 matches expected\nREPRO-END exit 0",
+      "status": "FINALIZED",
+      "round": 2,
+      "pending_verdict": null,
+      "verdict": "REPRODUCED",
+      "first_verdict": "REPRODUCED",
+      "scores": {
+        "log_consistency": 95,
+        "output_plausibility": 90,
+        "code_fidelity": 85,
+        "min_score": 85
+      },
+      "challenged": true,
+      "challenger": "0xD9eD3aFD8cB6d27380D3CDDdAd3575d87c306126",
+      "witness": null
+    },
+    "bounty0": {
+      "id": 0,
+      "poster": "0x355a5d6EA62F383117DbDcE52716A3C2B3992400",
+      "spec_hash": "9e0c088d4a4a58300e808f44646d87a9708057a98872de00eabb842be16f8e1f",
+      "code_ref": "https://example.org/reproduce.py",
+      "expected_code_hash": "3f9c3016763ca5b506de216152903050c37080f9bbce666d6c934207434dbeda",
+      "expected_output_hash": "759ba5bc0ba9d4a301ef865bd4bbe968c8dec6a93b899912e8225bcd8f6eb1bb",
+      "amount": 4000,
+      "escrow": 0,
+      "status": "CLOSED",
+      "winner": "0xCAe58dc17c308cFb39f957Dc9294911353461E75"
+    },
+    "reproducerBalanceAfterReproduced": "4000",
+    "reproducerReputationAfterReproduced": "110",
+    "attempt1": {
+      "id": 1,
+      "bounty_id": 1,
+      "reproducer": "0xCAe58dc17c308cFb39f957Dc9294911353461E75",
+      "code_hash": "3f9c3016763ca5b506de216152903050c37080f9bbce666d6c934207434dbeda",
+      "output_text": "pi=3.14000",
+      "output_hash": "e49f777154e45ce08f54d60da9241a6bde2dcb8bfdb2482c2f2fbf4a8dfb88b1",
+      "run_log": "REPRO-START run reproduce.py --seed 7\nstep 1: load data ok\nstep 2: compute pi series ok\nRESULT pi=3.14159 matches expected\nREPRO-END exit 0",
+      "status": "FINALIZED",
+      "round": 1,
+      "pending_verdict": null,
+      "verdict": "FAILED",
+      "first_verdict": null,
+      "scores": {
+        "log_consistency": 92,
+        "output_plausibility": 12,
+        "code_fidelity": 88,
+        "min_score": 12
+      },
+      "challenged": false,
+      "challenger": null,
+      "witness": null
+    },
+    "bounty1": {
+      "id": 1,
+      "poster": "0x355a5d6EA62F383117DbDcE52716A3C2B3992400",
+      "spec_hash": "9e0c088d4a4a58300e808f44646d87a9708057a98872de00eabb842be16f8e1f",
+      "code_ref": "https://example.org/reproduce.py",
+      "expected_code_hash": "3f9c3016763ca5b506de216152903050c37080f9bbce666d6c934207434dbeda",
+      "expected_output_hash": "759ba5bc0ba9d4a301ef865bd4bbe968c8dec6a93b899912e8225bcd8f6eb1bb",
+      "amount": 2000,
+      "escrow": 2000,
+      "status": "OPEN",
+      "winner": null
+    },
+    "reproducerReputationFinal": "105",
+    "posterBalanceFinal": "4000"
+  },
+  "checkedAt": "2026-11-09T08:01:51.559Z"
+}
