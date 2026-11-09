@@ -1,0 +1,1 @@
+{"dependencies":{"genlayer-js":"1.1.8"},"name":"repro-bounty-genlayer","private":true,"scripts":{"deploy":"node scripts/deploy.mjs","flow":"node scripts/flow.mjs","simulate":"node scripts/simulate.mjs","test":"python3 tests/test_local.py"},"type":"module","version":"1.0.0"}
